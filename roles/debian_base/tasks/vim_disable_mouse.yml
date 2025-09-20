@@ -1,0 +1,16 @@
+---
+- name: Найти defaults.vim
+  ansible.builtin.find:
+    paths: /usr/share/vim
+    patterns: defaults.vim
+    recurse: true
+  register: debian_base_vim_defaults
+
+- name: Отключить mouse в defaults.vim
+  ansible.builtin.replace:
+    path: "{{ item.path }}"
+    regexp: '^(.*set\s+mouse=)(a|nvi)(.*)$'
+    replace: '\1\3'
+    backup: true
+  loop: "{{ debian_base_vim_defaults.files }}"
+  when: debian_base_vim_defaults.matched > 0

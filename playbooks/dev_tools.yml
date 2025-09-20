@@ -1,0 +1,8 @@
+---
+- name: Установка инструментов разработчика
+  hosts: all
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: dev_tools

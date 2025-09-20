@@ -1,0 +1,14 @@
+---
+- name: Выполнить скрипт и вывести результат
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Выполнить скрипт
+      ansible.builtin.script: ../scripts/main.sh
+      register: script_result
+      changed_when: false
+
+    - name: Показать stdout скрипта
+      ansible.builtin.debug:
+        var: script_result.stdout_lines

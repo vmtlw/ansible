@@ -1,0 +1,13 @@
+---
+- name: Проверить, что root_password задан и не пуст
+  ansible.builtin.assert:
+    that:
+      - root_password is defined
+      - root_password | length > 0
+    fail_msg: "Поле пароля не должно оставаться пустым!"
+
+- name: Установить пароль пользователя root
+  ansible.builtin.user:
+    name: root
+    password: "{{ root_password | password_hash('sha512') }}"
+  no_log: true

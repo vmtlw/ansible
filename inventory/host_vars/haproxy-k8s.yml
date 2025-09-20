@@ -1,0 +1,85 @@
+---
+# HAProxy configuration for haproxy-k8s host
+
+# Common ACL configuration
+haproxy_common_acl:
+  allowed_ip: "src 10.0.0.0/24 10.1.0.0/24"
+
+# Server groups configuration
+haproxy_server_groups:
+  default:
+    - name: "node1"
+      ip: "172.16.30.120"
+      check: true
+    - name: "node2"
+      ip: "172.16.50.63"
+      check: true
+  master_group:
+    - name: "master1"
+      ip: "172.16.30.222"
+      check: true
+# Listen sections configuration
+haproxy_listen_sections:
+  - name: "k8s-cluster.domain.ru"
+    bind: ":80"
+    mode: "http"
+    balance: "roundrobin"
+    port: 80
+    server_group: "default"
+    acl:
+      - "is_acme path_beg /.well-known/acme-challenge/"
+    http_request:
+      - "deny if !allowed_ip !is_acme"
+      - "set-header X-Forwarded-Proto http"
+      - "set-header X-Forwarded-Port 80"
+      - "set-header X-Real-IP %[src]"
+      - "set-header Host %[req.hdr(Host)]"
+    option:
+      - "forwardfor"
+    use_allowed_ip: true
+
+  - name: "k8s-cluster-443.domain.ru"
+    bind: ":443"
+    mode: "tcp"
+    balance: "roundrobin"
+    port: 443
+    server_group: "default"
+    tcp_request:
+      - "connection reject if !allowed_ip"
+    timeout:
+      connect: "120s"
+      client: "120s"
+      server: "120s"
+    use_allowed_ip: true
+
+  - name: "k8s-cluster-6443.domain.ru"
+    bind: ":6443"
+    mode: "tcp"
+    balance: "roundrobin"
+    port: 6443
+    server_group: "master_group"
+    tcp_request:
+      - "connection reject if !allowed_ip"
+    use_allowed_ip: true
+########################################################### 
+  - name: "clickhouse-http"
+    bind: ":8123"
+    mode: "tcp"
+    balance: "roundrobin"
+    port: 8123
+    server_group: "default"
+  - name: "clickhouse-native-binary"
+    bind: ":9000"
+    mode: "tcp"
+    balance: "roundrobin"
+    port: 9000
+    server_group: "default"
+
+
+  - name: "galileosky-coredev.domain.ru"
+    bind: ":30300"
+    mode: "tcp"
+    balance: "roundrobin"
+    port: 30300
+    server_group: "default"
+

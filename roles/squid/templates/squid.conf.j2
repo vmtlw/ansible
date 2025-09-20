@@ -1,0 +1,69 @@
+http_port {{ squid_http_port }}
+
+# =================================================
+# ACL
+# =================================================
+
+{% if squid_restrict_client_ips %}
+# Разрешённые IP клиентов
+acl allowed_client src {{ squid_allowed_client_ips | join(' ') }}
+{% endif %}
+
+# Авторизация
+auth_param basic program /usr/lib/squid/basic_ncsa_auth {{ squid_password_file }}
+auth_param basic realm SquidProxy
+acl authenticated proxy_auth REQUIRED
+
+# HTTPS
+acl SSL_ports port {{ squid_ssl_ports | join(' ') }}
+acl CONNECT method CONNECT
+
+{% if squid_restrict_domains %}
+# Разрешённые целевые домены
+acl allowed_domains dstdomain {{ squid_allowed_domains | join(' ') }}
+{% endif %}
+
+
+# =================================================
+# ACCESS
+# =================================================
+
+# Запрещаем CONNECT на порты кроме разрешённых
+http_access deny CONNECT !SSL_ports
+
+{% if squid_restrict_client_ips and squid_restrict_domains %}
+
+# IP + авторизация + разрешённый домен
+http_access allow allowed_client authenticated allowed_domains
+
+{% elif squid_restrict_client_ips %}
+
+# IP + авторизация
+http_access allow allowed_client authenticated
+
+{% elif squid_restrict_domains %}
+
+# Авторизация + разрешённый домен
+http_access allow authenticated allowed_domains
+
+{% else %}
+
+# Только авторизация
+http_access allow authenticated
+
+{% endif %}
+
+# Всё остальное запрещено
+http_access deny all
+
+
+# =================================================
+# OTHER
+# =================================================
+
+access_log {{ squid_access_log }}
+cache_log {{ squid_cache_log }}
+
+{% if not squid_cache_enabled %}
+cache deny all
+{% endif %}

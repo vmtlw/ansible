@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  role_name: kora_icons
+  description: Установка темы иконок Kora
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+        - trixie
+dependencies: []

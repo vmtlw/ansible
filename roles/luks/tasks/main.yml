@@ -1,0 +1,94 @@
+---
+- name: Проверить, что задана парольная фраза или файл ключа
+  ansible.builtin.assert:
+    that:
+      - luks_passphrase is defined or luks_keyfile | length > 0
+    fail_msg: "Задайте luks_passphrase (через vars_prompt/vault) или luks_keyfile."
+
+- name: Установить cryptsetup
+  ansible.builtin.apt:
+    name: cryptsetup
+    state: present
+    update_cache: true
+
+- name: Пересоздать контейнер (ДЕСТРУКТИВНО)
+  when: luks_force_recreate
+  block:
+    - name: Получить точку монтирования /dev/mapper/{{ luks_name }}
+      ansible.builtin.command: "findmnt -n -o TARGET /dev/mapper/{{ luks_name }}"
+      register: luks_current_mount
+      changed_when: false
+      failed_when: false
+
+    - name: Отмонтировать раздел
+      ansible.posix.mount:
+        path: "{{ luks_current_mount.stdout }}"
+        state: unmounted
+      when: luks_current_mount.stdout | length > 0
+
+    - name: Закрыть LUKS-контейнер
+      community.crypto.luks_device:
+        device: "{{ luks_device }}"
+        state: closed
+      failed_when: false
+
+    - name: Очистить раздел от файловой системы
+      community.general.filesystem:
+        dev: "{{ luks_device }}"
+        state: absent
+
+- name: Создать/открыть LUKS-контейнер
+  community.crypto.luks_device:
+    device: "{{ luks_device }}"
+    state: opened
+    passphrase: "{{ luks_passphrase | default(omit) }}"
+    keyfile: "{{ luks_keyfile if luks_passphrase is not defined else omit }}"
+    type: luks2
+    name: "{{ luks_name }}"
+    label: "{{ luks_label }}"
+    pbkdf:
+      memory: 1048576
+      parallel: 4
+      algorithm: argon2id
+  no_log: true
+
+- name: Создать файловую систему {{ luks_fs_type }}
+  community.general.filesystem:
+    fstype: "{{ luks_fs_type }}"
+    dev: "/dev/mapper/{{ luks_name }}"
+    opts: "{{ '--metadata dup' if luks_fs_type == 'btrfs' else omit }}"
+    force: "{{ luks_force_recreate }}"
+
+- name: Создать точку монтирования
+  ansible.builtin.file:
+    path: "{{ luks_mount }}"
+    state: directory
+    mode: '0755'
+
+- name: Собрать факты о дисках
+  ansible.builtin.setup:
+    gather_subset:
+      - hardware
+
+- name: Определить тип устройства (ssd/hdd)
+  ansible.builtin.set_fact:
+    luks_dev_type: >-
+      {{ 'ssd'
+         if (ansible_facts['devices'][luks_device | basename]['rotational'] | default(1) | int == 0)
+         else 'hdd' }}
+
+- name: Задать параметры монтирования
+  ansible.builtin.set_fact:
+    luks_mount_opts: >-
+      {{ 'noatime,ssd,space_cache=v2,compress=zstd:3,discard=async'
+         if luks_dev_type == 'ssd'
+         else 'noatime,space_cache=v2,compress=zstd:1' }}
+
+- name: Смонтировать раздел и добавить в fstab
+  ansible.posix.mount:
+    path: "{{ luks_mount }}"
+    src: "/dev/mapper/{{ luks_name }}"
+    fstype: "{{ luks_fs_type }}"
+    state: mounted
+    boot: true
+    opts: "{{ luks_mount_opts }}"

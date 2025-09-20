@@ -1,0 +1,8 @@
+---
+- name: Применить патч lesspipe (поддержка .crt/.pem)
+  ansible.builtin.patch:
+    src: files/lesspipe.patch
+    dest: /usr/bin/lesspipe
+    strip: 0
+    backup: true
+  when: ansible_facts['os_family'] == 'Debian'

@@ -1,0 +1,23 @@
+---
+- name: Установка SSH-ключей (fallback на raw-скрипт для систем без Python 3.8+)
+  hosts: all
+  gather_facts: false
+
+  vars:
+    ssh_copy_id_script: "{{ playbook_dir }}/../scripts/ssh_copy_id_raw_module.sh"
+
+  tasks:
+    - name: Определить версию Python на целевом хосте
+      ansible.builtin.raw: python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null || echo "missing"
+      register: ssh_copy_id_python_version
+      changed_when: false
+      failed_when: false
+
+    - name: Установить ключи через роль (Python >= 3.8)
+      ansible.builtin.include_role:
+        name: ssh_copy_id
+      when: ssh_copy_id_python_version.stdout | trim is version('3.8', '>=')
+
+    - name: Установить ключи через shell-скрипт (Python отсутствует или < 3.8)
+      ansible.builtin.script: "{{ ssh_copy_id_script }} {{ ssh_copy_id_keys | map('quote') | join(' ') }}"
+      when: ssh_copy_id_python_version.stdout | trim is not version('3.8', '>=')

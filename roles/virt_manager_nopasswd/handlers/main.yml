@@ -1,0 +1,6 @@
+---
+- name: Reload polkit
+  ansible.builtin.systemd:
+    name: polkit
+    state: reloaded
+  failed_when: false

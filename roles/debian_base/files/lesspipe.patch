@@ -1,0 +1,15 @@
+diff --git a/lesspipe b/lesspipe
+index 57ef4f1..5c37c9b 100755
+--- a/lesspipe
++++ b/lesspipe
+@@ -87,6 +87,10 @@ if [ $# -eq 1 ] ; then
+ 
+ 		# Decode file for less
+ 		case `echo "$1" | tr '[:upper:]' '[:lower:]'` in
++			*.crt|*.pem)
++				if [ -x "`which openssl`" ]; then openssl x509 -hash -text -noout -in "$1"
++				esle echo "No openssl aviable"; fi ;;
++
+ 			*.a)
+ 				if [ -x "`which ar`" ]; then ar tv "$1"
+ 				else echo "No ar available"; fi ;;

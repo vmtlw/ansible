@@ -1,0 +1,25 @@
+---
+# Лимиты inotify
+inotify_max_user_instances: 8192
+inotify_max_user_watches: 524288
+
+# Лимит открытых файлов (nofile) для всех пользователей
+inotify_nofile_limit: 65535
+
+# Дополнительные параметры sysctl (99-sysctl.conf)
+inotify_sysctl_params:
+  net.ipv4.ip_forward: 1
+  kernel.keys.root_maxbytes: 25000000
+  kernel.keys.root_maxkeys: 1000000
+  kernel.panic: 10
+  kernel.panic_on_oops: 1
+  vm.overcommit_memory: 1
+  vm.panic_on_oom: 0
+  net.ipv4.ip_local_reserved_ports: 30000-32767
+  net.bridge.bridge-nf-call-iptables: 1
+  net.bridge.bridge-nf-call-arptables: 1
+  net.bridge.bridge-nf-call-ip6tables: 1
+
+# ДЕСТРУКТИВНО: полностью очистить /etc/sysctl.d и удалить /etc/sysctl.conf
+# перед записью новых файлов. По умолчанию выключено.
+inotify_reset_sysctl: false

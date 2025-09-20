@@ -1,0 +1,16 @@
+---
+- name: Сгенерировать локали
+  community.general.locale_gen:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ debian_base_locale }}"
+
+- name: Получить текущую локаль
+  ansible.builtin.command: localectl status
+  register: debian_base_localectl_status
+  changed_when: false
+
+- name: Установить системную локаль
+  ansible.builtin.command: "localectl set-locale LANG={{ debian_base_locale | first }} LANGUAGE={{ debian_base_language }}"
+  when:
+    - "'LANG=' + (debian_base_locale | first) not in debian_base_localectl_status.stdout"

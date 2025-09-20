@@ -1,0 +1,9 @@
+---
+# Пользователь графической сессии, для которого применяются настройки
+kora_icons_user: vladimir
+
+# GTK-тема
+kora_icons_gtk_theme: Adwaita-dark
+
+# Ветка репозитория kora
+kora_icons_repo_version: master

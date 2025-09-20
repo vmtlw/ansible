@@ -1,0 +1,4 @@
+docker_daemon_config:
+  firewall-backend: nftables
+  data-root: /srv/docker-data
+

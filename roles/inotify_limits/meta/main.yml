@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  role_name: inotify_limits
+  description: Настройка лимитов inotify и sysctl
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+        - trixie
+dependencies: []

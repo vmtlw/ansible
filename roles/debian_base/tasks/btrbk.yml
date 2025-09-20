@@ -1,0 +1,27 @@
+---
+- name: Установить btrbk
+  ansible.builtin.package:
+    name: btrbk
+    state: present
+
+- name: Создать конфигурацию btrbk
+  ansible.builtin.template:
+    src: btrbk.conf.j2
+    dest: /etc/btrbk/btrbk.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Настроить cron-задачу для btrbk
+  ansible.builtin.template:
+    src: btrbk_cron.j2
+    dest: /etc/cron.d/btrbk
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart cron
+
+- name: Создать SSH-ключ для btrbk
+  community.crypto.openssh_keypair:
+    path: "{{ debian_base_btrbk_key_path }}"
+    type: ed25519

@@ -1,0 +1,57 @@
+---
+- name: Установить git и rsync
+  ansible.builtin.package:
+    name:
+      - git
+      - rsync
+    state: present
+
+- name: Склонировать репозиторий kora
+  ansible.builtin.git:
+    repo: https://github.com/bikass/kora.git
+    dest: /tmp/kora
+    single_branch: true
+    version: "{{ kora_icons_repo_version }}"
+    force: true
+
+- name: Найти каталоги тем kora*
+  ansible.builtin.find:
+    paths: /tmp/kora
+    patterns: kora*
+    file_type: directory
+  register: kora_icons_dirs
+
+- name: Скопировать темы иконок в /usr/share/icons
+  ansible.posix.synchronize:
+    src: "{{ item.path }}/"
+    dest: "/usr/share/icons/{{ item.path | basename }}/"
+    recursive: true
+  loop: "{{ kora_icons_dirs.files }}"
+
+- name: Применить настройки рабочего стола для пользователя
+  become: true
+  become_user: "{{ kora_icons_user }}"
+  environment:
+    DISPLAY: ":0"
+    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ lookup('ansible.builtin.pipe', 'id -u ' + kora_icons_user) }}/bus"
+  block:
+    - name: Применить тему иконок
+      ansible.builtin.command: gsettings set org.gnome.desktop.interface icon-theme kora
+
+    - name: Применить тему GTK
+      ansible.builtin.command: gsettings set org.gnome.desktop.interface gtk-theme "{{ kora_icons_gtk_theme }}"
+
+    - name: Применить тему GTK для оконного менеджера
+      ansible.builtin.command: gsettings set org.gnome.desktop.wm.preferences theme "{{ kora_icons_gtk_theme }}"
+
+    - name: Отключить диалог небезопасной вставки в xfce4-terminal
+      ansible.builtin.command: xfconf-query -c xfce4-terminal -p /misc-show-unsafe-paste-dialog -s false
+
+    - name: Настроить цвета xfce4-terminal
+      ansible.builtin.shell: |
+        xfconf-query -c xfce4-terminal -p /color-use-theme -s true
+        xfconf-query -c xfce4-terminal -p /color-background -s '#2c2c2c'
+        xfconf-query -c xfce4-terminal -p /color-foreground -s '#dcdcdc'
+        xfconf-query -c xfce4-terminal -p /color-cursor -s '#dcdcdc'
+        xfconf-query -c xfce4-terminal -p /color-palette -s '#3f3f3f;#705050;#60b48a;#dfaf8f;#9ab8d7;#dc8cc3;#8cd0d3;#dcdcdc;#709080;#dca3a3;#72d5a3;#f0dfaf;#94bff3;#ec93d3;#93e0e3;#ffffff'
+        xfconf-query -c xfce4-panel -p /plugins/plugin-2/middle-click -t uint -s 1 --create

@@ -1,0 +1,77 @@
+---
+# ==========================================================================
+# Флаги компонентов роли. Каждый компонент включается отдельно.
+# ==========================================================================
+debian_base_zram_enabled: true
+debian_base_btrbk_enabled: true
+debian_base_motd_enabled: true
+debian_base_extra_packages_enabled: true
+debian_base_bashrc_enabled: true
+debian_base_lesspipe_enabled: true
+debian_base_vim_disable_mouse_enabled: true
+
+# Деструктивный компонент: чистит /var/backups, journald и кэш apt.
+# По умолчанию выключен.
+debian_base_clear_enabled: false
+
+debian_base_fail2ban_enabled: false
+debian_base_hostname_enabled: false
+debian_base_timezone_enabled: false
+debian_base_locale_enabled: false
+debian_base_chrony_enabled: false
+debian_base_resolv_enabled: false
+
+# ==========================================================================
+# Параметры компонентов
+# ==========================================================================
+
+# Hostname
+debian_base_hostname: "{{ inventory_hostname }}"
+
+# Часовой пояс
+debian_base_timezone: Europe/Moscow
+
+# Локаль
+debian_base_locale:
+  - en_US.UTF-8
+debian_base_language: en_US.UTF-8
+
+# DNS-сервер для /etc/resolv.conf
+debian_base_nameserver: 8.8.8.8
+
+# Разворачивать кастомный скрипт /etc/update-motd.d/99-mymotd
+debian_base_motd_custom_enabled: false
+
+# Путь к SSH-ключу btrbk
+debian_base_btrbk_key_path: /root/.ssh/btrbk.key
+
+# Дополнительные пакеты
+debian_base_packages:
+  - bash-completion
+  - btrbk
+  - busybox
+  - cron
+  - curl
+  - git
+  - htop
+  - iftop
+  - inxi
+  - iotop
+  - ipcalc
+  - iperf3
+  - jq
+  - logrotate
+  - mc
+  - ncdu
+  - needrestart
+  - net-tools
+  - nload
+  - python-is-python3
+  - rsync
+  - sysstat
+  - telnet
+  - tmux
+  - tree
+  - vim
+  - whois
+  - zstd

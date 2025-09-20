@@ -1,0 +1,9 @@
+---
+- name: Переписать /etc/resolv.conf
+  ansible.builtin.copy:
+    dest: /etc/resolv.conf
+    content: |
+      nameserver {{ debian_base_nameserver }}
+    owner: root
+    group: root
+    mode: '0644'

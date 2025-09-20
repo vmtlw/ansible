@@ -1,0 +1,35 @@
+---
+# Порт Squid
+squid_http_port: 3128
+
+# Пользователь для авторизации в Squid
+squid_proxy_username: squid
+
+# Запрашивать пароль интерактивно при выполнении роли
+squid_proxy_prompt_password: true
+
+# Файл с паролями
+squid_password_file: /etc/squid/passwd
+
+# true  - использовать список squid_allowed_client_ips
+# false - разрешить клиентов с любых IP
+squid_restrict_client_ips: true
+
+squid_allowed_client_ips:
+  - "1.1.1.3/32"
+  - "1.2.2.1/32"
+
+# true  - использовать squid_allowed_domains
+# false - разрешить любые домены
+squid_restrict_domains: false
+
+squid_allowed_domains: []
+
+# Разрешаем CONNECT только на 443
+squid_ssl_ports:
+  - 443
+
+squid_access_log: /var/log/squid/access.log
+squid_cache_log: /var/log/squid/cache.log
+
+squid_cache_enabled: false

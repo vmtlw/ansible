@@ -1,0 +1,17 @@
+---
+- name: Перезагрузка удалённых машин
+  hosts: all
+  become: true
+  gather_facts: false
+
+  vars_prompt:
+    - name: confirm_reboot
+      prompt: "Вы уверены, что хотите перезагрузить все машины выбранного инвентаря? (yes/no)"
+      private: false
+
+  tasks:
+    - name: Перезагрузить хост
+      ansible.builtin.reboot:
+        reboot_timeout: 200
+        test_command: whoami
+      when: confirm_reboot == "yes"

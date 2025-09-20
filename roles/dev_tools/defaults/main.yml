@@ -1,0 +1,41 @@
+---
+# Флаги включения инструментов
+dev_tools_cilium_enabled: true
+dev_tools_terraform_enabled: true
+dev_tools_terragrunt_enabled: true
+dev_tools_sops_enabled: true
+dev_tools_kubectl_enabled: true
+dev_tools_k9s_enabled: true
+dev_tools_adb_enabled: true
+dev_tools_medusa_enabled: true
+dev_tools_privatebin_enabled: true
+dev_tools_helm_enabled: true
+dev_tools_minio_client_enabled: true
+
+# Версии инструментов (пустая строка — последняя доступная, где поддерживается)
+dev_tools_terraform_version: "1.17.2"
+dev_tools_terragrunt_version: "1.2.2"
+dev_tools_sops_version: "3.13.3"
+dev_tools_kubectl_version: "1.37.2"
+dev_tools_k9s_version: "0.51.0"
+dev_tools_scrcpy_version: "v5.0.1"
+dev_tools_medusa_version: "0.7.3"
+dev_tools_minio_client_version: "RELEASE.2025-08-13T08-35-41Z"
+dev_tools_cilium_version: "v0.20.3"
+dev_tools_helm_version: ""
+
+# Каталог установки бинарных файлов
+dev_tools_bin_dir: /usr/local/bin
+
+# Временный каталог для загрузок
+dev_tools_tmp_dir: /tmp/dev-tools
+
+dev_tools_architecture: amd64
+dev_tools_os: linux
+
+# Зеркало реестра провайдеров Terraform
+dev_tools_terraform_registry_mirror: https://tf-proxy.selectel.ru/mirror/v1/
+
+# Настройки privatebin-cli (устанавливается для пользователя, запустившего ansible)
+dev_tools_privatebin_home: "{{ lookup('ansible.builtin.env', 'HOME') }}"
+dev_tools_privatebin_host: https://paste.vmtlw.ru

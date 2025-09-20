@@ -1,0 +1,22 @@
+---
+# Разрешённые IP-адреса и сети (ключ — адрес/сеть, значение — комментарий)
+iptables_allowed_ips:
+  172.16.0.0/16: "selectel network"
+  10.0.0.1:
+
+# Дополнительные разрешённые IP (обычно задаётся в host_vars),
+# объединяется с iptables_allowed_ips
+iptables_allowed_ips_extra: {}
+
+# Multiport-правила для NEW-подключений, например:
+# iptables_multiport_rules:
+#   - ports: "80,443"
+#     comment: "web"
+iptables_multiport_rules: []
+
+# ДЕСТРУКТИВНО: сбросить все существующие правила (iptables -F/-X,
+# включая nat и mangle) перед настройкой. По умолчанию выключено.
+iptables_flush_existing: false
+
+# Сохранять правила после перезагрузки (iptables-persistent)
+iptables_persist: true

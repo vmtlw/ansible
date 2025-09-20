@@ -1,0 +1,19 @@
+---
+- name: Пропустить настройку, если основной интерфейс уже br0
+  ansible.builtin.debug:
+    msg: "Интерфейс уже br0, настройка netplan не требуется."
+  when: ansible_facts['default_ipv4']['interface'] == 'br0'
+
+- name: Подготовить систему (удалить лишние сетевые пакеты)
+  ansible.builtin.import_tasks: remove_packages.yml
+  when: netplan_iface != 'br0'
+
+- name: Создать конфигурацию netplan для br0
+  ansible.builtin.template:
+    src: 01-br0.yaml.j2
+    dest: /etc/netplan/01-br0.yaml
+    owner: root
+    group: root
+    mode: '0600'
+  when: netplan_iface != 'br0'
+  notify: Apply netplan

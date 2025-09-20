@@ -1,0 +1,90 @@
+---
+- name: Проверка состояния серверов
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Проверить использование диска
+      ansible.builtin.command: df -h /
+      register: disk_usage
+      changed_when: false
+      no_log: true
+
+    - name: Найти большие файлы в /var/log (более 100M)
+      ansible.builtin.find:
+        paths: /var/log
+        patterns: '*'
+        recurse: true
+        size: 100m
+      register: large_logs
+
+    - name: Найти старые логи (не изменялись более 30 дней)
+      ansible.builtin.find:
+        paths: /var/log
+        recurse: true
+        age: 30d
+      register: old_logs
+
+    - name: Проверить упавшие systemd-сервисы
+      ansible.builtin.command: systemctl --failed --no-legend
+      register: failed_services
+      changed_when: false
+      failed_when: false
+
+    - name: Сформировать сводку по хосту
+      ansible.builtin.set_fact:
+        summary: |
+          ----------------------------------------------------------------
+
+          Host: {{ inventory_hostname }}
+
+          Disk usage:
+          {{ disk_usage.stdout }}
+
+          Large logs:
+          {% if large_logs.files | length > 0 %}
+          {% for f in large_logs.files %}
+          - {{ f.path }} ({{ f.size }} bytes)
+          {% endfor %}
+          {% else %}
+          None
+          {% endif %}
+
+          Old logs:
+          {% if old_logs.files | length > 0 %}
+          {% for f in old_logs.files %}
+          - {{ f.path }} (modified: {{ f.mtime | to_datetime }})
+          {% endfor %}
+          {% else %}
+          None
+          {% endif %}
+
+          Failed services:
+          {% if failed_services.stdout_lines | length > 0 %}
+          {% for line in failed_services.stdout_lines %}
+          - {{ line }}
+          {% endfor %}
+          {% else %}
+          None
+          {% endif %}
+
+- name: Сохранить сводки локально
+  hosts: localhost
+  gather_facts: false
+  vars:
+    report_path: /tmp/reports
+
+  tasks:
+    - name: Создать каталог для отчётов
+      ansible.builtin.file:
+        path: "{{ report_path }}"
+        state: directory
+        mode: '0755'
+
+    - name: Записать отчёт по каждому хосту
+      ansible.builtin.copy:
+        content: "{{ hostvars[item].summary | default('No data') }}"
+        dest: "{{ report_path }}/{{ item }}_summary.txt"
+        mode: '0644'
+      loop: "{{ groups['all'] }}"

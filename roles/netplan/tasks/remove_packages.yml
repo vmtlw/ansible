@@ -1,0 +1,23 @@
+---
+- name: Установить netplan и systemd-resolved
+  ansible.builtin.apt:
+    pkg:
+      - netplan.io
+      - systemd-resolved
+    state: present
+    update_cache: true
+
+- name: Удалить лишние сетевые пакеты
+  ansible.builtin.apt:
+    state: absent
+    autoremove: true
+    pkg:
+      - network-manager*
+      - ifupdown
+      - dhcpcd
+      - dhclient
+      - resolvconf
+
+- name: Очистить кэш apt
+  ansible.builtin.apt:
+    clean: true

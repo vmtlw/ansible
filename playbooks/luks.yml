@@ -1,0 +1,13 @@
+---
+- name: Шифрование раздела LUKS
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars_prompt:
+    - name: luks_passphrase
+      prompt: "Введите парольную фразу для LUKS"
+      private: true
+
+  roles:
+    - role: luks

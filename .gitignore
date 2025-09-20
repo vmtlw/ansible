@@ -1,0 +1,21 @@
+# Python
+venv/
+env/
+__pycache__/
+*.py[cod]
+
+# Ansible
+*.retry
+*.log
+.ansible/
+facts_cache/
+
+# Secrets — реальные значения храните здесь, файлы не коммитятся
+inventory/group_vars/vault.yml
+inventory/host_vars/vault.yml
+**/vault*.yml
+!**/vault*.yml.example
+
+# IDE
+.idea/
+.vscode/

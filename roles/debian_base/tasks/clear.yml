@@ -1,0 +1,17 @@
+---
+- name: Рекурсивно удалить /var/backups
+  ansible.builtin.file:
+    path: /var/backups
+    state: absent
+
+- name: Провести ротацию логов journald
+  ansible.builtin.command: journalctl --rotate
+  changed_when: false
+
+- name: Удалить все логи journald
+  ansible.builtin.command: journalctl --vacuum-time=1s
+  changed_when: false
+
+- name: Очистить кэш APT
+  ansible.builtin.apt:
+    clean: true

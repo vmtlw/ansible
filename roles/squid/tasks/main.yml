@@ -1,0 +1,86 @@
+---
+- name: Install Squid and htpasswd
+  ansible.builtin.apt:
+    name:
+      - squid
+      - apache2-utils
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+
+- name: Ensure squid service is enabled
+  ansible.builtin.systemd:
+    name: squid
+    enabled: true
+
+
+# =================================================
+# PASSWORD
+# =================================================
+
+- name: Ask for Squid password
+  ansible.builtin.pause:
+    prompt: "Enter password for Squid user '{{ squid_proxy_username }}'"
+    echo: false
+  register: squid_password_prompt
+  when: squid_proxy_prompt_password
+  no_log: true
+
+
+- name: Set Squid password fact
+  ansible.builtin.set_fact:
+    squid_proxy_password: "{{ squid_password_prompt.user_input }}"
+  when: squid_proxy_prompt_password
+  no_log: true
+
+
+- name: Check whether Squid password file exists
+  ansible.builtin.stat:
+    path: "{{ squid_password_file }}"
+  register: squid_password_file_stat
+
+
+- name: Create Squid password file
+  ansible.builtin.file:
+    path: "{{ squid_password_file }}"
+    state: touch
+    owner: root
+    group: proxy
+    mode: "0640"
+  when: not squid_password_file_stat.stat.exists
+
+
+- name: Set Squid user password
+  ansible.builtin.shell:
+    cmd: |
+      printf '%s\n' '{{ squid_proxy_password }}' |
+      htpasswd -i -B -c "{{ squid_password_file }}" "{{ squid_proxy_username }}"
+  when: squid_proxy_prompt_password
+  no_log: true
+  notify: Restart squid
+
+
+# =================================================
+# CONFIGURATION
+# =================================================
+
+- name: Deploy Squid configuration
+  ansible.builtin.template:
+    src: squid.conf.j2
+    dest: /etc/squid/squid.conf
+    owner: root
+    group: root
+    mode: "0644"
+    validate: "/usr/sbin/squid -k parse -f %s"
+  notify: Restart squid
+
+
+# =================================================
+# SERVICE
+# =================================================
+
+- name: Ensure Squid is started
+  ansible.builtin.systemd:
+    name: squid
+    state: started

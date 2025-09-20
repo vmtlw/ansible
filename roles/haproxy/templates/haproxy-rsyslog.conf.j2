@@ -1,0 +1,34 @@
+# Rsyslog configuration for HAProxy
+# {{ ansible_managed }}
+
+# Create an additional socket to load-balance the logs
+$ModLoad imuxsock
+$AddUnixListenSocket /var/lib/rsyslog/rsyslog.sock
+
+# Improved filter syntax using modern rsyslog features
+module(load="imuxsock")
+module(load="imfile")
+
+# Set file permissions for newly created files
+$FileOwner root
+$FileGroup root
+$FileCreateMode 0644
+$DirCreateMode 0755
+
+# HAProxy logging rules
+# Filter out "no server available" messages to prevent console spam
+if $programname == 'haproxy' and $msg contains 'has no server available!' then ~
+
+local0.* -/var/log/haproxy/haproxy.log
+local0.notice -/var/log/haproxy/haproxy-admin.log
+local0.warning -/var/log/haproxy/haproxy-status.log
+
+# Log haproxy messages by program name as well (for systemd)
+if $programname == 'haproxy' then {
+    action(type="omfile" file="/var/log/haproxy/haproxy.log")
+    stop
+}
+
+# Discard the logs so they don't end up in /var/log/syslog as well
+if $syslogfacility-text == 'local0' then ~
+if $programname == 'haproxy' then ~

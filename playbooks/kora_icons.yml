@@ -1,0 +1,8 @@
+---
+- name: Установка темы иконок Kora
+  hosts: all
+  become: true
+  gather_facts: false
+
+  roles:
+    - role: kora_icons

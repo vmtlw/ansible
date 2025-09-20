@@ -1,0 +1,26 @@
+---
+# Устройство для шифрования
+luks_device: /dev/sda1
+
+# Имя открытого контейнера в /dev/mapper
+luks_name: crypto_data
+
+# Метка LUKS-контейнера
+luks_label: crypto_data
+
+# Тип файловой системы
+luks_fs_type: btrfs
+
+# Парольная фраза. ЗНАЧЕНИЯ ПО УМОЛЧАНИЮ НЕТ — задайте через
+# vars_prompt в плейбуке, extra-vars или ansible-vault.
+# luks_passphrase: ""
+
+# Файл ключа (используется, если luks_passphrase не задана)
+luks_keyfile: /root/keyfile
+
+# Точка монтирования
+luks_mount: /mnt
+
+# ДЕСТРУКТИВНО: отмонтировать, закрыть и полностью пересоздать
+# контейнер и файловую систему. Все данные на разделе будут потеряны.
+luks_force_recreate: false

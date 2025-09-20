@@ -1,0 +1,12 @@
+---
+- name: Установить fail2ban
+  ansible.builtin.package:
+    name: fail2ban
+    state: present
+    update_cache: true
+
+- name: Включить и запустить fail2ban
+  ansible.builtin.service:
+    name: fail2ban
+    enabled: true
+    state: started

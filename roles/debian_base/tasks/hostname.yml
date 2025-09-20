@@ -1,0 +1,13 @@
+---
+- name: Установить системный hostname
+  ansible.builtin.hostname:
+    name: "{{ debian_base_hostname }}"
+
+- name: Прописать hostname в /etc/hosts
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '^127\.0\.0\.1\s+'
+    line: "127.0.0.1 {{ debian_base_hostname }} {{ debian_base_hostname.split('.')[0] }} localhost"
+    state: present
+    create: true
+    firstmatch: true

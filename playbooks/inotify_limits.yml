@@ -1,0 +1,8 @@
+---
+- name: Настройка лимитов inotify и sysctl
+  hosts: all
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: inotify_limits

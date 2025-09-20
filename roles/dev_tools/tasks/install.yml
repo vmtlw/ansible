@@ -1,0 +1,321 @@
+---
+- name: Install Terraform
+  when: dev_tools_terraform_enabled
+  block:
+    - name: Download Terraform
+      ansible.builtin.get_url:
+        url: >-
+          https://releases.hashicorp.com/terraform/{{ dev_tools_terraform_version }}/terraform_{{ dev_tools_terraform_version }}_{{ dev_tools_os }}_{{ dev_tools_architecture }}.zip
+        dest: >-
+          {{ dev_tools_tmp_dir }}/terraform_{{ dev_tools_terraform_version }}.zip
+        mode: "0644"
+
+    - name: Extract Terraform
+      ansible.builtin.unarchive:
+        src: >-
+          {{ dev_tools_tmp_dir }}/terraform_{{ dev_tools_terraform_version }}.zip
+        dest: "{{ dev_tools_bin_dir }}"
+        remote_src: true
+        mode: "0755"
+
+    - name: Verify Terraform
+      ansible.builtin.command:
+        cmd: "{{ dev_tools_bin_dir }}/terraform version"
+      register: dev_tools_terraform_result
+      changed_when: false
+
+    - name: Show Terraform version
+      ansible.builtin.debug:
+        msg: "{{ dev_tools_terraform_result.stdout }}"
+
+
+- name: Install Terragrunt
+  when: dev_tools_terragrunt_enabled
+  block:
+    - name: Download Terragrunt
+      ansible.builtin.get_url:
+        url: >-
+          https://github.com/gruntwork-io/terragrunt/releases/download/v{{ dev_tools_terragrunt_version }}/terragrunt_{{ dev_tools_os }}_{{ dev_tools_architecture }}
+        dest: "{{ dev_tools_bin_dir }}/terragrunt"
+        mode: "0755"
+
+    - name: Verify Terragrunt
+      ansible.builtin.command:
+        cmd: "{{ dev_tools_bin_dir }}/terragrunt --version"
+      register: dev_tools_terragrunt_result
+      changed_when: false
+
+    - name: Show Terragrunt version
+      ansible.builtin.debug:
+        msg: "{{ dev_tools_terragrunt_result.stdout }}"
+
+    - name: Deploy Terraform CLI config
+      ansible.builtin.template:
+        src: terragrunt.hcl.j2
+        dest: /etc/terraformrc
+        owner: root
+        group: root
+        mode: "0664"
+
+
+- name: Install SOPS
+  when: dev_tools_sops_enabled
+  block:
+    - name: Download SOPS
+      ansible.builtin.get_url:
+        url: >-
+          https://github.com/getsops/sops/releases/download/v{{ dev_tools_sops_version }}/sops-v{{ dev_tools_sops_version }}.{{ dev_tools_os }}.{{ dev_tools_architecture }}
+        dest: "{{ dev_tools_bin_dir }}/sops"
+        mode: "0755"
+
+    - name: Verify SOPS
+      ansible.builtin.command:
+        cmd: "{{ dev_tools_bin_dir }}/sops --version"
+      register: dev_tools_sops_result
+      changed_when: false
+
+    - name: Show SOPS version
+      ansible.builtin.debug:
+        msg: "{{ dev_tools_sops_result.stdout }}"
+
+    - name: Install age apt package
+      ansible.builtin.apt:
+        name: age
+        state: present
+
+
+- name: Install kubectl
+  when: dev_tools_kubectl_enabled
+  block:
+    - name: Download kubectl
+      ansible.builtin.get_url:
+        url: >-
+          https://dl.k8s.io/release/v{{ dev_tools_kubectl_version }}/bin/linux/{{ dev_tools_architecture }}/kubectl
+        dest: "{{ dev_tools_bin_dir }}/kubectl"
+        mode: "0755"
+
+    - name: Verify kubectl
+      ansible.builtin.command:
+        cmd: "{{ dev_tools_bin_dir }}/kubectl version --client=true --output=yaml"
+      register: dev_tools_kubectl_result
+      changed_when: false
+
+    - name: Show kubectl version
+      ansible.builtin.debug:
+        msg: "{{ dev_tools_kubectl_result.stdout }}"
+
+
+- name: Install k9s
+  when: dev_tools_k9s_enabled
+  block:
+    - name: Download k9s archive
+      ansible.builtin.get_url:
+        url: >-
+          https://github.com/derailed/k9s/releases/download/v{{ dev_tools_k9s_version }}/k9s_{{ dev_tools_os }}_{{ dev_tools_architecture }}.deb
+        dest: >-
+          {{ dev_tools_tmp_dir }}/k9s_{{ dev_tools_k9s_version }}.deb
+        mode: "0644"
+
+    - name: install deb package k9s
+      ansible.builtin.apt:
+        deb: "{{ dev_tools_tmp_dir }}/k9s_{{ dev_tools_k9s_version }}.deb"
+        state: present
+
+    - name: Verify k9s
+      ansible.builtin.command:
+        cmd: "k9s version"
+      register: dev_tools_k9s_result
+      changed_when: false
+
+    - name: Show k9s version
+      ansible.builtin.debug:
+        msg: "{{ dev_tools_k9s_result.stdout }}"
+
+- name: Install adb
+  when: dev_tools_adb_enabled
+  block:
+    - name: Download scrcpy tarball
+      ansible.builtin.get_url:
+        url: "https://github.com/Genymobile/scrcpy/releases/download/{{ dev_tools_scrcpy_version }}/scrcpy-linux-{{ ansible_facts['machine'] }}-{{ dev_tools_scrcpy_version }}.tar.gz"
+        dest: "{{ dev_tools_tmp_dir }}/scrcpy-linux-{{ ansible_facts['machine'] }}-{{ dev_tools_scrcpy_version }}.tar.gz"
+        mode: '0644'
+
+    - name: Extract scrcpy tarball
+      ansible.builtin.unarchive:
+        src: "{{ dev_tools_tmp_dir }}/scrcpy-linux-{{ ansible_facts['machine'] }}-{{ dev_tools_scrcpy_version }}.tar.gz"
+        dest: "{{ dev_tools_tmp_dir }}"
+        remote_src: true
+
+    - name: Copy scrcpy files to {{ dev_tools_bin_dir }}
+      ansible.builtin.copy:
+        src: "{{ dev_tools_tmp_dir }}/scrcpy-linux-{{ ansible_facts['machine'] }}-{{ dev_tools_scrcpy_version }}/{{ item }}"
+        dest: "{{ dev_tools_bin_dir }}/{{ item }}"
+        mode: '0755'
+        remote_src: true
+      loop:
+        - adb
+        - scrcpy
+        - scrcpy.1
+        - scrcpy-server
+    
+- name: Install medusa
+  when: dev_tools_medusa_enabled
+  block:
+    - name: Download Medusa archive
+      ansible.builtin.get_url:
+        url: "https://github.com/jonasvinther/medusa/releases/download/v{{ dev_tools_medusa_version }}/medusa_{{ dev_tools_medusa_version }}_{{ dev_tools_os }}_{{ dev_tools_architecture }}.tar.gz"
+        dest: "{{ dev_tools_tmp_dir }}/medusa_{{ dev_tools_medusa_version }}.tar.gz"
+        mode: "0644"
+    
+    - name: Extract Medusa binary
+      ansible.builtin.unarchive:
+        src: "{{ dev_tools_tmp_dir }}/medusa_{{ dev_tools_medusa_version }}.tar.gz"
+        dest: "{{ dev_tools_bin_dir }}"
+        remote_src: true
+
+    - name: Set executable permissions
+      ansible.builtin.file:
+        path: "{{ dev_tools_bin_dir }}/medusa"
+        mode: "0755"
+
+
+- name: Install privatebin-cli
+  when: dev_tools_privatebin_enabled
+  block:
+    - name: Install privatebin-cli
+      ansible.builtin.apt:
+        name: privatebin-cli
+        state: present
+
+    - name: Ensure folder ~/.config/privatebin
+      ansible.builtin.file:
+        path: "{{ dev_tools_privatebin_home }}/.config/privatebin"
+        state: directory
+        mode: '0770'
+        recurse: true
+
+    - name: Ensure config.json для privatebin
+      ansible.builtin.copy:
+        dest: "{{ dev_tools_privatebin_home }}/.config/privatebin/config.json"
+        mode: '0640'
+        content: |
+          {
+              "bin": [
+                  {
+                      "name": "",
+                      "host": "{{ dev_tools_privatebin_host }}"
+                  }
+              ]
+          }
+    
+- name: Install Helm on system
+  when: dev_tools_helm_enabled
+  block:
+    - name: Download Helm installation script
+      ansible.builtin.uri:
+        url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        return_content: yes
+      register: helm_installer
+
+    - name: Execute Helm installation script
+      ansible.builtin.command:
+        cmd: bash
+        stdin: "{{ helm_installer.content }}"
+        creates: "{{ dev_tools_bin_dir }}/helm"
+      environment:
+        DESIRED_VERSION: "{{ dev_tools_helm_version }}"
+
+- name: Install minio client on system
+  when: dev_tools_minio_client_enabled
+  block:
+    - name: Download mc
+      ansible.builtin.get_url:
+        url: "https://github.com/minio/mc/releases/download/{{ dev_tools_minio_client_version }}/mc.linux-{{ dev_tools_architecture }}.{{ dev_tools_minio_client_version }}"
+        dest: "{{ dev_tools_bin_dir }}/mc"
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Check mc
+      ansible.builtin.command:
+        cmd: "{{ dev_tools_bin_dir }}/mc --version"
+      register: mc_version_result
+      changed_when: false
+    
+    - name: Show mc version
+      ansible.builtin.debug:
+        var: mc_version_result.stdout
+
+- name: Install Cilium on system
+  when: dev_tools_cilium_enabled
+  block:
+    - name: Determine Cilium CLI architecture
+      ansible.builtin.set_fact:
+        dev_tools_cilium_arch: >-
+          {{
+            'arm64'
+            if ansible_facts['architecture'] == 'aarch64'
+            else 'amd64'
+          }}
+
+    - name: Create temporary directory
+      ansible.builtin.file:
+        path: "{{ dev_tools_tmp_dir }}/cilium-cli"
+        state: directory
+        mode: "0755"
+
+    - name: Get latest stable Cilium CLI version
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt
+        dest: "{{ dev_tools_tmp_dir }}/cilium-cli/stable.txt"
+        mode: "0644"
+      when: dev_tools_cilium_version | length == 0
+
+    - name: Read latest stable Cilium CLI version
+      ansible.builtin.slurp:
+        src: "{{ dev_tools_tmp_dir }}/cilium-cli/stable.txt"
+      register: dev_tools_cilium_stable_version
+      when: dev_tools_cilium_version | length == 0
+
+    - name: Set Cilium CLI version
+      ansible.builtin.set_fact:
+        dev_tools_cilium_version_resolved: >-
+          {{
+            dev_tools_cilium_version
+            if dev_tools_cilium_version | length > 0
+            else (dev_tools_cilium_stable_version.content | b64decode | trim)
+          }}
+
+    - name: Download Cilium CLI archive
+      ansible.builtin.get_url:
+        url: >-
+          https://github.com/cilium/cilium-cli/releases/download/{{ dev_tools_cilium_version_resolved }}/cilium-linux-{{ dev_tools_cilium_arch }}.tar.gz
+        dest: "{{ dev_tools_tmp_dir }}/cilium-cli/cilium-linux-{{ dev_tools_cilium_arch }}.tar.gz"
+        mode: "0644"
+
+    - name: Download Cilium CLI checksum
+      ansible.builtin.get_url:
+        url: >-
+          https://github.com/cilium/cilium-cli/releases/download/{{ dev_tools_cilium_version_resolved }}/cilium-linux-{{ dev_tools_cilium_arch }}.tar.gz.sha256sum
+        dest: "{{ dev_tools_tmp_dir }}/cilium-cli/cilium-linux-{{ dev_tools_cilium_arch }}.tar.gz.sha256sum"
+        mode: "0644"
+
+    - name: Verify Cilium CLI archive checksum
+      ansible.builtin.command:
+        cmd: sha256sum --check cilium-linux-{{ dev_tools_cilium_arch }}.tar.gz.sha256sum
+        chdir: "{{ dev_tools_tmp_dir }}/cilium-cli"
+      changed_when: false
+
+    - name: Extract Cilium CLI binary
+      ansible.builtin.unarchive:
+        src: "{{ dev_tools_tmp_dir }}/cilium-cli/cilium-linux-{{ dev_tools_cilium_arch }}.tar.gz"
+        dest: "{{ dev_tools_bin_dir }}"
+        remote_src: true
+        mode: "0755"
+
+    - name: Remove temporary files
+      ansible.builtin.file:
+        path: "{{ dev_tools_tmp_dir }}/cilium-cli"
+        state: absent
+
+

@@ -1,0 +1,15 @@
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    {{ netplan_iface }}: {}
+  bridges:
+    br0:
+      interfaces: [{{ netplan_iface }}]
+      dhcp4: true
+      nameservers:
+        search: [{{ netplan_search_domain }}]
+      parameters:
+        stp: false
+        forward-delay: 0
+

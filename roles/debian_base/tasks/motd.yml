@@ -1,0 +1,45 @@
+---
+- name: Отключить PrintLastLog в sshd_config
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PrintLastLog'
+    line: 'PrintLastLog no'
+    state: present
+    backup: true
+  notify: Restart sshd
+
+- name: Отключить PrintMotd в sshd_config
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PrintMotd'
+    line: 'PrintMotd no'
+    state: present
+    backup: true
+  notify: Restart sshd
+
+- name: Удалить /etc/motd
+  ansible.builtin.file:
+    path: /etc/motd
+    state: absent
+
+- name: Очистить /etc/update-motd.d
+  ansible.builtin.file:
+    path: /etc/update-motd.d
+    state: absent
+
+- name: Создать пустой каталог /etc/update-motd.d
+  ansible.builtin.file:
+    path: /etc/update-motd.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Развернуть кастомный MOTD-скрипт
+  ansible.builtin.template:
+    src: motd.j2
+    dest: /etc/update-motd.d/99-mymotd
+    owner: root
+    group: root
+    mode: '0755'
+  when: debian_base_motd_custom_enabled

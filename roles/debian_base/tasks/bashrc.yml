@@ -1,0 +1,13 @@
+---
+- name: Установить bash-completion
+  ansible.builtin.package:
+    name: bash-completion
+    state: present
+
+- name: Сгенерировать /etc/bash.bashrc из шаблона
+  ansible.builtin.template:
+    src: bash.bashrc.j2
+    dest: /etc/bash.bashrc
+    owner: root
+    group: root
+    mode: '0644'

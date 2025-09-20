@@ -1,0 +1,56 @@
+---
+- name: Zram
+  ansible.builtin.import_tasks: zram.yml
+  when: debian_base_zram_enabled
+
+- name: Btrbk
+  ansible.builtin.import_tasks: btrbk.yml
+  when: debian_base_btrbk_enabled
+
+- name: Motd
+  ansible.builtin.import_tasks: motd.yml
+  when: debian_base_motd_enabled
+
+- name: Extra packages
+  ansible.builtin.import_tasks: extra_packages.yml
+  when: debian_base_extra_packages_enabled
+
+- name: Bashrc
+  ansible.builtin.import_tasks: bashrc.yml
+  when: debian_base_bashrc_enabled
+
+- name: Lesspipe
+  ansible.builtin.import_tasks: lesspipe.yml
+  when: debian_base_lesspipe_enabled
+
+- name: Vim disable mouse
+  ansible.builtin.import_tasks: vim_disable_mouse.yml
+  when: debian_base_vim_disable_mouse_enabled
+
+- name: Clear
+  ansible.builtin.import_tasks: clear.yml
+  when: debian_base_clear_enabled
+
+- name: Fail2ban
+  ansible.builtin.import_tasks: fail2ban.yml
+  when: debian_base_fail2ban_enabled
+
+- name: Hostname
+  ansible.builtin.import_tasks: hostname.yml
+  when: debian_base_hostname_enabled
+
+- name: Timezone
+  ansible.builtin.import_tasks: timezone.yml
+  when: debian_base_timezone_enabled
+
+- name: Locale
+  ansible.builtin.import_tasks: locale.yml
+  when: debian_base_locale_enabled
+
+- name: Chrony
+  ansible.builtin.import_tasks: chrony.yml
+  when: debian_base_chrony_enabled
+
+- name: Resolv
+  ansible.builtin.import_tasks: resolv.yml
+  when: debian_base_resolv_enabled

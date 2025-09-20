@@ -1,0 +1,7 @@
+// Allow members of {{ virt_manager_nopasswd_group }} to manage libvirt without auth
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.libvirt.unix.manage" &&
+        subject.isInGroup("{{ virt_manager_nopasswd_group }}")) {
+        return polkit.Result.YES;
+    }
+});

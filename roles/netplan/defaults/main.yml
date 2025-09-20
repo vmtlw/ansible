@@ -1,0 +1,6 @@
+---
+# Интерфейс, включаемый в мост br0 (по умолчанию — текущий основной)
+netplan_iface: "{{ ansible_facts['default_ipv4']['interface'] }}"
+
+# search-домен для nameservers
+netplan_search_domain: vmtlw.ru

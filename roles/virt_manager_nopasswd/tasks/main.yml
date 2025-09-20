@@ -1,0 +1,29 @@
+---
+- name: Создать группу для управления libvirt без пароля
+  ansible.builtin.group:
+    name: "{{ virt_manager_nopasswd_group }}"
+    state: present
+
+- name: Получить список пользователей
+  ansible.builtin.getent:
+    database: passwd
+
+- name: Добавить обычных пользователей (UID >= 1000) в группу
+  ansible.builtin.user:
+    name: "{{ item.key }}"
+    groups: "{{ virt_manager_nopasswd_group }}"
+    append: true
+  loop: "{{ ansible_facts['getent_passwd'] | dict2items }}"
+  when:
+    - item.value[1] | int >= 1000
+    - item.value[1] | int < 65534
+  no_log: true
+
+- name: Создать правило polkit для libvirt без пароля
+  ansible.builtin.template:
+    src: 50-libvirt-nopasswd.rules.j2
+    dest: /etc/polkit-1/rules.d/50-libvirt-nopasswd.rules
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload polkit

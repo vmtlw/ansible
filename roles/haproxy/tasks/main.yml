@@ -1,0 +1,80 @@
+---
+- name: Установить HAProxy и rsyslog
+  ansible.builtin.apt:
+    name:
+      - "{{ haproxy_package }}"
+      - rsyslog
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Создать конфигурацию rsyslog для HAProxy
+  ansible.builtin.template:
+    src: haproxy-rsyslog.conf.j2
+    dest: /etc/rsyslog.d/49-haproxy.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart rsyslog
+
+- name: Создать каталог логов HAProxy
+  ansible.builtin.file:
+    path: /var/log/haproxy
+    state: directory
+    owner: "{{ haproxy_user }}"
+    group: "{{ haproxy_group }}"
+    mode: '0755'
+
+- name: Создать пустые лог-файлы с корректными правами
+  ansible.builtin.file:
+    path: "/var/log/haproxy/{{ item }}"
+    state: touch
+    owner: "{{ haproxy_user }}"
+    group: "{{ haproxy_group }}"
+    mode: '0644'
+  loop:
+    - haproxy.log
+    - haproxy-admin.log
+    - haproxy-status.log
+
+- name: Создать каталог сокета rsyslog
+  ansible.builtin.file:
+    path: /var/lib/rsyslog
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Настроить logrotate для HAProxy
+  ansible.builtin.template:
+    src: haproxy-logrotate.j2
+    dest: /etc/logrotate.d/haproxy
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Создать конфигурацию HAProxy из шаблона
+  ansible.builtin.template:
+    src: haproxy.cfg.j2
+    dest: "{{ haproxy_config_file }}"
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+    validate: haproxy -c -f %s
+  notify:
+    - Restart rsyslog
+    - Restart haproxy
+
+- name: Применить handlers до проверки статуса
+  ansible.builtin.meta: flush_handlers
+
+- name: Проверить конфигурацию HAProxy
+  ansible.builtin.command: haproxy -f "{{ haproxy_config_file }}" -c
+  changed_when: false
+
+- name: Включить и запустить HAProxy
+  ansible.builtin.systemd:
+    name: "{{ haproxy_service }}"
+    state: started
+    enabled: true

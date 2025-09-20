@@ -1,0 +1,8 @@
+---
+- name: Настройка iptables
+  hosts: all
+  become: true
+  gather_facts: false
+
+  roles:
+    - role: iptables

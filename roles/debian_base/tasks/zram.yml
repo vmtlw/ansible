@@ -1,0 +1,46 @@
+---
+- name: Проверить активные swap-разделы
+  ansible.builtin.command: swapon --show --noheadings
+  register: debian_base_swapon
+  changed_when: false
+  failed_when: false
+
+- name: Отключить swap
+  ansible.builtin.command: swapoff --all
+  when: debian_base_swapon.stdout | length > 0
+
+- name: Установить zram-tools и zstd
+  ansible.builtin.package:
+    name:
+      - zram-tools
+      - zstd
+    state: present
+    update_cache: true
+
+- name: Загрузить модуль ядра zram и сделать загрузку постоянной
+  community.general.modprobe:
+    name: zram
+    persistent: present
+    state: present
+
+- name: Создать конфигурацию /etc/default/zramswap
+  ansible.builtin.copy:
+    dest: /etc/default/zramswap
+    content: |
+      ALGO=zstd
+      PERCENT=200
+    owner: root
+    group: root
+    mode: '0644'
+  register: debian_base_zramswap_config
+
+- name: Перезапустить zramswap при изменении конфигурации
+  ansible.builtin.service:
+    name: zramswap
+    state: restarted
+  when: debian_base_zramswap_config is changed
+
+- name: Включить службу zramswap
+  ansible.builtin.service:
+    name: zramswap
+    enabled: true

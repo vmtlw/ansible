@@ -1,0 +1,4 @@
+---
+- name: Установить часовой пояс
+  community.general.timezone:
+    name: "{{ debian_base_timezone }}"

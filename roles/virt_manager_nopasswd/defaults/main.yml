@@ -1,0 +1,3 @@
+---
+# Группа, которой разрешено управлять libvirt без пароля
+virt_manager_nopasswd_group: libvirt

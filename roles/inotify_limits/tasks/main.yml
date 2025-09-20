@@ -1,0 +1,54 @@
+---
+- name: Установить лимит nofile для всех пользователей
+  ansible.builtin.copy:
+    dest: /etc/security/limits.d/99-nofile.conf
+    content: |
+      * soft nofile {{ inotify_nofile_limit }}
+      * hard nofile {{ inotify_nofile_limit }}
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Очистить /etc/sysctl.d и /etc/sysctl.conf
+  when: inotify_reset_sysctl
+  block:
+    - name: Удалить содержимое /etc/sysctl.d
+      ansible.builtin.file:
+        path: /etc/sysctl.d
+        state: absent
+
+    - name: Создать пустой /etc/sysctl.d
+      ansible.builtin.file:
+        path: /etc/sysctl.d
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Удалить /etc/sysctl.conf
+      ansible.builtin.file:
+        path: /etc/sysctl.conf
+        state: absent
+
+- name: Настроить лимиты inotify
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/98-inotify.conf
+    content: |
+      fs.inotify.max_user_instances={{ inotify_max_user_instances }}
+      fs.inotify.max_user_watches={{ inotify_max_user_watches }}
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload sysctl
+
+- name: Настроить дополнительные параметры sysctl
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/99-sysctl.conf
+    content: |
+      {% for key, value in inotify_sysctl_params.items() %}
+      {{ key }}={{ value }}
+      {% endfor %}
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload sysctl

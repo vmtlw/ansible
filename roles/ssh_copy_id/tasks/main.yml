@@ -1,0 +1,44 @@
+---
+- name: Проверить, что список ключей не пуст
+  ansible.builtin.assert:
+    that:
+      - ssh_copy_id_keys | length > 0
+    fail_msg: "Задайте ssh_copy_id_keys (например, в group_vars или через ansible-vault)."
+
+- name: Создать каталог /root/.ssh
+  ansible.builtin.file:
+    path: /root/.ssh
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+  when: ssh_copy_id_user == 'root'
+
+- name: Добавить публичные ключи в authorized_keys
+  ansible.posix.authorized_key:
+    user: "{{ ssh_copy_id_user }}"
+    key: "{{ item }}"
+    state: present
+  loop: "{{ ssh_copy_id_keys }}"
+
+- name: Отключить аутентификацию по паролю
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PasswordAuthentication\s+'
+    line: 'PasswordAuthentication no'
+    state: present
+    backrefs: true
+  notify: Restart sshd
+
+- name: Запретить вход root по паролю (только по ключу)
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitRootLogin\s+'
+    line: 'PermitRootLogin prohibit-password'
+    state: present
+    backrefs: true
+  notify: Restart sshd
+
+- name: Применить изменения sshd
+  ansible.builtin.meta: flush_handlers
+  when: ssh_copy_id_restart_sshd
