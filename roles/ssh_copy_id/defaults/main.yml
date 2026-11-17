@@ -4,7 +4,8 @@ ssh_copy_id_user: root
 
 # Список публичных ключей. Переопределите в group_vars/host_vars
 # или в зашифрованном ansible-vault файле.
-ssh_copy_id_keys: []
+ssh_copy_id_keys:
+  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBKKMgnN8zJCxrlpBlTc14/SaBZ/shFsEsoFqZttbx2R
 
 # Перезапускать sshd после изменения конфигурации
 ssh_copy_id_restart_sshd: true

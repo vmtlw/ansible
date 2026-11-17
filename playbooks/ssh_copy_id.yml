@@ -1,6 +1,7 @@
 ---
 - name: Установка SSH-ключей (fallback на raw-скрипт для систем без Python 3.8+)
   hosts: all
+  become: true
   gather_facts: false
 
   vars:
